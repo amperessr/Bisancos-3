@@ -9,15 +9,22 @@
   const GAME_ID = 'heart-catch';
   const DURATION = 60;
 
-  // 掉落物。weight 是抽中的相對權重，不用加起來等於 100。
+  // 掉落物。weight 是開局的抽中權重，weightEnd 是結尾（60 秒時）的權重，
+  // 兩者間逐秒線性內插——好東西權重降、壞東西權重升，後期不只更快更密，
+  // 抽到炸彈／破碎愛心的機率也明顯提高，逼玩家看清楚再接，不能無腦亂接。
+  // 不用加起來等於 100，只看相對比例。
   const TYPES = [
-    { key: 'heart',  emoji: '💗', score: 10,  weight: 38, good: true,  r: 21 },
-    { key: 'rose',   emoji: '🌹', score: 20,  weight: 18, good: true,  r: 21 },
-    { key: 'gift',   emoji: '🎁', score: 30,  weight: 10, good: true,  r: 22 },
-    { key: 'broken', emoji: '💔', score: -10, weight: 16, good: false, r: 21 },
-    { key: 'bomb',   emoji: '💣', score: -20, weight: 18, good: false, r: 21 },
+    { key: 'heart',  emoji: '💗', score: 10,  weight: 38, weightEnd: 26, good: true,  r: 21 },
+    { key: 'rose',   emoji: '🌹', score: 20,  weight: 18, weightEnd: 12, good: true,  r: 21 },
+    { key: 'gift',   emoji: '🎁', score: 30,  weight: 10, weightEnd: 10, good: true,  r: 22 },
+    { key: 'broken', emoji: '💔', score: -10, weight: 16, weightEnd: 24, good: false, r: 21 },
+    { key: 'bomb',   emoji: '💣', score: -20, weight: 18, weightEnd: 28, good: false, r: 21 },
   ];
-  const WEIGHT_SUM = TYPES.reduce((s, t) => s + t.weight, 0);
+
+  function currentWeight(t) {
+    const p = clamp(elapsed / DURATION, 0, 1);
+    return t.weight + (t.weightEnd - t.weight) * p;
+  }
 
   const TOP_Y = 96;             // 掉落起點，讓開 HUD
   const BASKET_W = 78;
@@ -155,8 +162,9 @@
 
   // ── 生成 ─────────────────────────────────────
   function pickType() {
-    let r = Math.random() * WEIGHT_SUM;
-    for (const t of TYPES) { r -= t.weight; if (r <= 0) return t; }
+    const sum = TYPES.reduce((s, t) => s + currentWeight(t), 0);
+    let r = Math.random() * sum;
+    for (const t of TYPES) { r -= currentWeight(t); if (r <= 0) return t; }
     return TYPES[0];
   }
 
@@ -167,7 +175,7 @@
       x: rand(t.r + 12, W - t.r - 12),
       y: TOP_Y - t.r,
       // 掉快一點、停留時間短，畫面才不會愈堆愈亂
-      vy: rand(150, 230) * (1 + elapsed / DURATION * 0.4),
+      vy: rand(150, 230) * (1 + elapsed / DURATION * 0.6),
       spin: rand(-1, 1),
       rot: 0,
     });
@@ -191,7 +199,7 @@
     spawnTimer -= dt;
     if (spawnTimer <= 0) {
       spawn();
-      spawnTimer = rand(0.38, 0.62) * (1 - elapsed / DURATION * 0.25);
+      spawnTimer = rand(0.38, 0.62) * (1 - elapsed / DURATION * 0.4);
     }
 
     const by = basketY();
