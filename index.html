@@ -13,9 +13,12 @@
   <canvas id="game"></canvas>
 
   <div id="hud">
-    <span class="chip">💗 <span id="score">0</span></span>
-    <span class="chip">🧺 <span id="caught">0</span></span>
-    <span class="chip">⏱ <span id="time">60</span></span>
+    <div class="hud-stats">
+      <span class="chip">💗 <span id="score">0</span></span>
+      <span class="chip">🧺 <span id="caught">0</span></span>
+      <span class="chip">⏱ <span id="time">60</span></span>
+    </div>
+    <button class="chip mute-btn" id="mute" aria-label="靜音切換">🔊</button>
   </div>
 
   <!-- 開始畫面 -->
@@ -46,6 +49,7 @@
 
 <script src="shared/config.js"></script>
 <script src="shared/leaderboard.js"></script>
+<script src="shared/audio.js"></script>
 <script src="game.js"></script>
 </body>
 </html>

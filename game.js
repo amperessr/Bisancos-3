@@ -36,7 +36,7 @@
   const el = (id) => document.getElementById(id);
   const ui = {
     menu: el('menu'), over: el('over'), name: el('name'),
-    start: el('start'), again: el('again'),
+    start: el('start'), again: el('again'), mute: el('mute'),
     score: el('score'), caught: el('caught'), time: el('time'),
     finalScore: el('final-score'), finalDetail: el('final-detail'), board: el('board'),
   };
@@ -65,22 +65,14 @@
   window.addEventListener('resize', resize);
   window.addEventListener('orientationchange', () => setTimeout(resize, 200));
 
-  // ── 音效 ─────────────────────────────────────
-  let ac = null;
-  function beep(freq, dur, type, vol) {
-    try {
-      if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
-      if (ac.state === 'suspended') ac.resume();
-      const o = ac.createOscillator();
-      const g = ac.createGain();
-      o.type = type || 'sine';
-      o.frequency.setValueAtTime(freq, ac.currentTime);
-      g.gain.setValueAtTime(vol || 0.06, ac.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + dur);
-      o.connect(g); g.connect(ac.destination);
-      o.start(); o.stop(ac.currentTime + dur);
-    } catch (e) { /* 未授權音訊就靜音 */ }
-  }
+  // ── 音樂／音效（shared/audio.js 提供的共用引擎） ──
+  // 背景音樂是正式配樂檔（assets/bgm.mp3），音效沒有對應的檔案，
+  // 維持用 WebAudio 合成短音符（叮咚聲、過場旋律）。
+  const N = { D4: 293.66, G3: 196.00, G4: 392.00, A4: 440.00,
+    B4: 493.88, D5: 587.33, E5: 659.25, G5: 783.99 };
+  const MUSIC_URL = 'assets/bgm.mp3';
+
+  function sfx(notes) { QIXI_AUDIO.sfx(notes); }
 
   // ── 遊戲流程 ─────────────────────────────────
   function reset() {
@@ -102,14 +94,17 @@
     ui.over.classList.add('hidden');
     state = 'playing';
     lastT = performance.now();
-    beep(660, 0.12, 'triangle');
+    QIXI_AUDIO.unlock();
+    sfx([{ freq: N.G4, dur: 0.1 }, { freq: N.B4, dur: 0.1, at: 0.08 }, { freq: N.D5, dur: 0.16, at: 0.16 }]);
+    QIXI_AUDIO.startMusic(MUSIC_URL);
     requestAnimationFrame(loop);
   }
 
   async function endGame() {
     if (state === 'over') return;
     state = 'over';
-    beep(330, 0.3, 'sine');
+    QIXI_AUDIO.stopMusic(0.4);
+    sfx([{ freq: N.D5, dur: 0.14 }, { freq: N.B4, dur: 0.16, at: 0.1 }, { freq: N.G4, dur: 0.3, at: 0.2 }]);
     const name = QIXI_LB.getName() || '匿名';
     ui.finalScore.textContent = score;
     ui.finalDetail.textContent = `接住 ${caught} 個　誤接 ${missHit} 個`;
@@ -236,10 +231,11 @@
     const type = it.type;
     if (type.good) {
       caught++;
-      beep(760 + Math.min(caught, 15) * 22, 0.09, 'triangle');
+      const base = 760 + Math.min(caught, 15) * 22;
+      sfx([{ freq: base, dur: 0.07 }, { freq: base * 1.22, dur: 0.09, at: 0.05 }]);
     } else {
       missHit++;
-      beep(160, 0.18, 'sawtooth', 0.05);
+      sfx([{ freq: 220, dur: 0.12, type: 'sawtooth', vol: 0.05 }, { freq: 140, dur: 0.18, type: 'sawtooth', vol: 0.045, at: 0.07 }]);
     }
     score = Math.max(0, score + type.score);
     basket.bump = 1;
@@ -417,6 +413,14 @@
   }
 
   // ── 啟動 ─────────────────────────────────────
+  function refreshMuteIcon() { ui.mute.textContent = QIXI_AUDIO.isMuted() ? '🔇' : '🔊'; }
+  ui.mute.addEventListener('click', () => {
+    QIXI_AUDIO.unlock();
+    QIXI_AUDIO.toggleMuted();
+    refreshMuteIcon();
+  });
+  refreshMuteIcon();
+
   ui.start.addEventListener('click', startGame);
   ui.again.addEventListener('click', () => {
     ui.over.classList.add('hidden');
