@@ -1,0 +1,203 @@
+/* Bisancos 七夕遊戲 — 三款共用的手機版樣式 */
+
+:root {
+  --pink: #ff6b9d;
+  --pink-deep: #e14b7f;
+  --pink-soft: #ffd6e4;
+  --cream: #fff6f9;
+  --ink: #4a2c3a;
+  --gold: #ffc94b;
+  --shadow: 0 6px 20px rgba(200, 60, 110, 0.22);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  /* position: fixed 是 iOS Safari 擋下拉重新整理與橡皮筋捲動最可靠的做法，
+     只靠 overflow:hidden 在 iOS 上擋不住 */
+  position: fixed;
+  inset: 0;
+  touch-action: manipulation; /* iOS 會忽略 user-scalable=no，要靠這行擋雙擊放大 */
+  font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', system-ui, sans-serif;
+  color: var(--ink);
+  background: linear-gradient(170deg, #ffe3ee 0%, #ffd0e2 45%, #ffc0d8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 手機直式為主；桌機時夾在中間，維持同一個比例 */
+#stage {
+  position: relative;
+  width: 100%;
+  height: 100dvh; /* iOS Safari 網址列會伸縮，用 dvh 才不會被裁掉底部 */
+  max-width: 480px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #ffeef5 0%, #ffdcea 60%, #ffcbe0 100%);
+  box-shadow: var(--shadow);
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+/* ── 覆蓋層（開始畫面／結算畫面） ───────────────── */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  /* iPhone 15 Pro：底部 home indicator 會蓋到按鈕，用安全區墊高 */
+  padding: calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));
+  background: rgba(255, 240, 246, 0.94);
+  backdrop-filter: blur(6px);
+  text-align: center;
+  z-index: 10;
+}
+.overlay.hidden { display: none; }
+
+/* ── 主視覺：三款遊戲共用同一組識別，只有標題文字與 icon 不同 ── */
+.eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  color: #c98aa6;
+  margin-bottom: -8px;
+}
+.title {
+  font-size: 30px;
+  font-weight: 900;
+  color: var(--pink-deep);
+  letter-spacing: 1px;
+}
+.divider {
+  width: 54px;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--pink), transparent);
+}
+.subtitle { font-size: 14px; line-height: 1.7; color: #8a6b78; }
+
+.rules {
+  background: #fff;
+  border-radius: 16px;
+  padding: 14px 18px;
+  font-size: 14px;
+  line-height: 1.9;
+  box-shadow: var(--shadow);
+  text-align: left;
+  width: 100%;
+  max-width: 320px;
+}
+.rules b { color: var(--pink-deep); }
+
+input[type='text'] {
+  width: 100%;
+  max-width: 260px;
+  padding: 12px 16px;
+  font-size: 16px; /* 小於 16px 時 iOS 會自動放大頁面 */
+  font-family: inherit;
+  text-align: center;
+  border: 2px solid var(--pink-soft);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  outline: none;
+}
+input[type='text']:focus { border-color: var(--pink); }
+
+.btn {
+  padding: 14px 42px;
+  font-size: 18px;
+  font-weight: 800;
+  font-family: inherit;
+  color: #fff;
+  background: linear-gradient(135deg, var(--pink) 0%, var(--pink-deep) 100%);
+  border: none;
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+.btn:active { transform: scale(0.96); }
+.btn.ghost {
+  background: #fff;
+  color: var(--pink-deep);
+  border: 2px solid var(--pink-soft);
+  padding: 11px 28px;
+  font-size: 15px;
+}
+
+/* ── HUD ─────────────────────────────────────── */
+#hud {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* 動態島會壓到 HUD，往下墊安全區 */
+  padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+  font-weight: 800;
+  font-size: 16px;
+  color: var(--pink-deep);
+  text-shadow: 0 1px 0 #fff;
+  pointer-events: none;
+  z-index: 5;
+}
+#hud .chip {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 999px;
+  padding: 5px 14px;
+}
+
+/* ── 排行榜 ───────────────────────────────────── */
+.board {
+  width: 100%;
+  max-width: 320px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 10px;
+  box-shadow: var(--shadow);
+}
+.board-head {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #c98aa6;
+  padding: 2px 0 8px;
+}
+.board-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  font-size: 14px;
+  border-radius: 10px;
+}
+.board-row.me { background: var(--pink-soft); font-weight: 800; }
+.board-row .rank { width: 26px; text-align: center; }
+.board-row .who { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.board-row .pts { font-weight: 800; color: var(--pink-deep); }
+.board-msg { padding: 14px; font-size: 13px; color: #a8899a; }
+.board-gap { font-size: 12px; color: #d5bcc8; line-height: 1; padding: 2px 0; }
+
+.big-score {
+  font-size: 52px;
+  font-weight: 900;
+  color: var(--pink-deep);
+  line-height: 1;
+}
