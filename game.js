@@ -8,7 +8,7 @@
 
   const GAME_ID = 'heart-catch';
   const DURATION = 60;
-  const LIVES_START = 10;
+  const LIVES_START = 5;
 
   // 掉落物。weight 是開局的抽中權重，weightEnd 是結尾（60 秒時）的權重，
   // 兩者間逐秒線性內插——好東西權重降、壞東西權重升，後期不只更快更密，
