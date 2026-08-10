@@ -8,6 +8,7 @@
 
   const GAME_ID = 'heart-catch';
   const DURATION = 60;
+  const LIVES_START = 10;
 
   // 掉落物。weight 是開局的抽中權重，weightEnd 是結尾（60 秒時）的權重，
   // 兩者間逐秒線性內插——好東西權重降、壞東西權重升，後期不只更快更密，
@@ -37,13 +38,14 @@
   const ui = {
     menu: el('menu'), over: el('over'), name: el('name'),
     start: el('start'), again: el('again'), mute: el('mute'),
-    score: el('score'), caught: el('caught'), time: el('time'),
-    finalScore: el('final-score'), finalDetail: el('final-detail'), board: el('board'),
+    score: el('score'), caught: el('caught'), lives: el('lives'), time: el('time'),
+    reason: el('over-reason'), finalScore: el('final-score'), finalDetail: el('final-detail'), board: el('board'),
   };
 
   let W = 0, H = 0;
   let state = 'menu';
-  let score = 0, caught = 0, missHit = 0, elapsed = 0, timeLeft = DURATION;
+  let score = 0, caught = 0, missHit = 0, lives = LIVES_START, elapsed = 0, timeLeft = DURATION;
+  let deathReason = '';
   let basket, items, pops, sparks;
   let spawnTimer = 0, lastT = 0;
 
@@ -76,12 +78,13 @@
 
   // ── 遊戲流程 ─────────────────────────────────
   function reset() {
-    score = 0; caught = 0; missHit = 0;
+    score = 0; caught = 0; missHit = 0; lives = LIVES_START; deathReason = '';
     elapsed = 0; timeLeft = DURATION; spawnTimer = 0;
     basket = { x: W / 2, targetX: W / 2, tilt: 0, bump: 0 };
     items = []; pops = []; sparks = [];
     ui.score.textContent = '0';
     ui.caught.textContent = '0';
+    ui.lives.textContent = String(lives);
     ui.time.textContent = String(DURATION);
   }
 
@@ -106,6 +109,7 @@
     QIXI_AUDIO.stopMusic(0.4);
     sfx([{ freq: N.D5, dur: 0.14 }, { freq: N.B4, dur: 0.16, at: 0.1 }, { freq: N.G4, dur: 0.3, at: 0.2 }]);
     const name = QIXI_LB.getName() || '匿名';
+    ui.reason.textContent = deathReason || '時間到';
     ui.finalScore.textContent = score;
     ui.finalDetail.textContent = `接住 ${caught} 個　誤接 ${missHit} 個`;
     ui.over.classList.remove('hidden');
@@ -235,6 +239,8 @@
       sfx([{ freq: base, dur: 0.07 }, { freq: base * 1.22, dur: 0.09, at: 0.05 }]);
     } else {
       missHit++;
+      lives = Math.max(0, lives - 1);
+      ui.lives.textContent = String(lives);
       sfx([{ freq: 220, dur: 0.12, type: 'sawtooth', vol: 0.05 }, { freq: 140, dur: 0.18, type: 'sawtooth', vol: 0.045, at: 0.07 }]);
     }
     score = Math.max(0, score + type.score);
@@ -258,6 +264,11 @@
         color: type.good ? '#ff6b9d' : '#7a8bff',
         size: rand(3, 6),
       });
+    }
+
+    if (lives <= 0) {
+      deathReason = '生命耗盡';
+      endGame();
     }
   }
 
