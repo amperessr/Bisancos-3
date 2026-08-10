@@ -38,7 +38,7 @@
   const ui = {
     menu: el('menu'), over: el('over'), name: el('name'),
     start: el('start'), again: el('again'), mute: el('mute'),
-    score: el('score'), caught: el('caught'), lives: el('lives'), time: el('time'),
+    score: el('score'), lives: el('lives'), time: el('time'),
     reason: el('over-reason'), finalScore: el('final-score'), finalDetail: el('final-detail'), board: el('board'),
   };
 
@@ -83,7 +83,6 @@
     basket = { x: W / 2, targetX: W / 2, tilt: 0, bump: 0 };
     items = []; pops = []; sparks = [];
     ui.score.textContent = '0';
-    ui.caught.textContent = '0';
     ui.lives.textContent = String(lives);
     ui.time.textContent = String(DURATION);
   }
@@ -246,7 +245,6 @@
     score = Math.max(0, score + type.score);
     basket.bump = 1;
     ui.score.textContent = score;
-    ui.caught.textContent = caught;
 
     pops.push({
       x: it.x, y: basketY() - 10, life: 0.8,
