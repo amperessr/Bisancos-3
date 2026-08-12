@@ -55,6 +55,44 @@
   }
 
   const TOP_N = 5;
+  const ADMIN_PASSWORD = '0000';
+
+  /** 清空某款遊戲的排行榜。走 REST DELETE，直接砍掉整個 best 節點。 */
+  async function clearBoard(gameId) {
+    if (!dbUrl()) return false;
+    try {
+      const res = await fetch(`${dbUrl()}/${gameId}/best.json`, { method: 'DELETE' });
+      return res.ok;
+    } catch (err) {
+      console.warn('[排行榜] 清除失敗：', err.message);
+      return false;
+    }
+  }
+
+  /** 排行榜右上角的管理色塊：密碼對才會問「確定要清除」，全部用原生
+   *  prompt/confirm/alert——這是給管理者用的後台按鈕，不用跟遊戲本身
+   *  的粉色系介面統一風格，用瀏覽器原生對話框反而更清楚「這是系統層級操作」。
+   *  ⚠️ 這不是真正的身分驗證：密碼寫在前端原始碼裡任何人都看得到，只能
+   *  擋掉不小心手滑點到，擋不住存心想搞破壞的人（跟整個 REST API 一樣，
+   *  安全性完全靠 Firebase 規則，不靠這組密碼）。 */
+  function attachAdminBadge(container, gameId, onCleared) {
+    const badge = container.querySelector('.board-admin');
+    if (!badge) return;
+    badge.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const pw = window.prompt('管理密碼：');
+      if (pw === null) return; // 使用者按取消
+      if (pw !== ADMIN_PASSWORD) { window.alert('輸入錯誤'); return; }
+      if (!window.confirm('確定要清除這款遊戲的排行榜紀錄嗎？此動作無法復原。')) return;
+      const ok = await clearBoard(gameId);
+      if (ok) {
+        window.alert('排行榜已清除');
+        if (onCleared) onCleared();
+      } else {
+        window.alert('清除失敗，請檢查網路連線');
+      }
+    });
+  }
 
   /** 取全部排序後的名次。資料量小（每人一筆），直接抓回來本地排序，不用建 index。 */
   async function fetchAll(gameId) {
@@ -89,10 +127,15 @@
       container.innerHTML = '<div class="board-msg">排行榜連線失敗</div>';
       return;
     }
+
+    const adminBadge = '<div class="board-admin" title="管理"></div>';
+    const rerender = () => render(container, gameId, myName);
+
     if (!all.length) {
-      container.innerHTML =
+      container.innerHTML = adminBadge +
         '<div class="board-head">🏆 排行榜 TOP 5</div>' +
         '<div class="board-msg">還沒有人上榜，快來當第一名！</div>';
+      attachAdminBadge(container, gameId, rerender);
       return;
     }
 
@@ -104,7 +147,7 @@
       `<span class="pts">${entry.score}</span>` +
       `</div>`;
 
-    let html = '<div class="board-head">🏆 排行榜 TOP 5</div>';
+    let html = adminBadge + '<div class="board-head">🏆 排行榜 TOP 5</div>';
     html += all.slice(0, TOP_N).map((e, i) => row(e, i + 1, e.name === myName)).join('');
 
     const myIndex = all.findIndex((e) => e.name === myName);
@@ -112,6 +155,7 @@
       html += '<div class="board-gap">⋯</div>' + row(all[myIndex], myIndex + 1, true);
     }
     container.innerHTML = html;
+    attachAdminBadge(container, gameId, rerender);
   }
 
   function escapeHtml(s) {

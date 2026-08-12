@@ -37,7 +37,7 @@
   const el = (id) => document.getElementById(id);
   const ui = {
     menu: el('menu'), over: el('over'), name: el('name'),
-    start: el('start'), again: el('again'), mute: el('mute'),
+    start: el('start'), again: el('again'), mute: el('mute'), trial: el('trial'), trialTag: el('trial-tag'),
     menuRules: el('menu-rules'), menuBoard: el('menu-board'), showBoard: el('show-board'),
     score: el('score'), lives: el('lives'), time: el('time'),
     reason: el('over-reason'), finalScore: el('final-score'), finalDetail: el('final-detail'), board: el('board'),
@@ -45,6 +45,7 @@
 
   let W = 0, H = 0;
   let state = 'menu';
+  let trialMode = false;        // 試玩：照常遊玩，只是結束時不送分數
   let score = 0, caught = 0, missHit = 0, lives = LIVES_START, elapsed = 0, timeLeft = DURATION;
   let deathReason = '';
   let basket, items, pops, sparks;
@@ -93,6 +94,7 @@
     reset();
     ui.menu.classList.add('hidden');
     ui.over.classList.add('hidden');
+    ui.trialTag.classList.toggle('hidden', !trialMode);
     state = 'playing';
     lastT = performance.now();
     QIXI_AUDIO.unlock();
@@ -107,9 +109,15 @@
     const name = QIXI_LB.getName() || '匿名';
     ui.reason.textContent = deathReason || '時間到';
     ui.finalScore.textContent = score;
-    ui.finalDetail.textContent = `接住 ${caught} 個　誤接 ${missHit} 個`;
+    ui.finalDetail.textContent = trialMode
+      ? `接住 ${caught} 個　誤接 ${missHit} 個　🎮 試玩模式`
+      : `接住 ${caught} 個　誤接 ${missHit} 個`;
     ui.over.classList.remove('hidden');
 
+    if (trialMode) {
+      ui.board.innerHTML = '<div class="board-msg">試玩模式，成績不計入排行榜</div>';
+      return;
+    }
     await QIXI_LB.submitScore(GAME_ID, {
       name,
       score,
@@ -437,10 +445,11 @@
     if (showingBoard) await QIXI_LB.render(ui.menuBoard, GAME_ID, QIXI_LB.getName());
   });
 
-  ui.start.addEventListener('click', startGame);
+  ui.start.addEventListener('click', () => { trialMode = false; startGame(); });
+  ui.trial.addEventListener('click', () => { trialMode = true; startGame(); });
   ui.again.addEventListener('click', () => {
     ui.over.classList.add('hidden');
-    startGame();
+    startGame(); // 沿用上一局的模式：試玩再玩一次還是試玩，正式再玩一次還是正式
   });
   ui.name.value = QIXI_LB.getName();
   resize();

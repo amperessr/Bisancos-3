@@ -211,12 +211,25 @@ input[type='text']:focus { border-color: var(--pink); }
 
 /* ── 排行榜 ───────────────────────────────────── */
 .board {
+  position: relative; /* .board-admin 靠這個定位到右上角 */
   width: 100%;
   max-width: 320px;
   background: #fff;
   border-radius: 16px;
   padding: 10px;
   box-shadow: var(--shadow);
+}
+/* 排行榜管理色塊：純粹一個紅色小方塊，刻意不做成明顯的按鈕樣式，
+   一般玩家不會特別注意到，點了才會跳密碼框 */
+.board-admin {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: #e5484d;
+  cursor: pointer;
 }
 .board-head {
   font-size: 12px;
