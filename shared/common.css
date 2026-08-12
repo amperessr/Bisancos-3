@@ -72,7 +72,10 @@ canvas {
      #stage 是 overflow:hidden，沒有這行會直接被裁掉看不到 */
   overflow-y: auto;
 }
-.overlay.hidden { display: none; }
+/* 通用的顯示/隱藏切換，overlay／board／rules 共用同一個 class；
+   之前只寫 .overlay.hidden，導致 <div class="board hidden"> 這種組合
+   完全沒被隱藏——空白板子從選單一開啟就佔著位置，只是內容是空的不明顯 */
+.hidden { display: none; }
 
 /* ── 主視覺：三款遊戲共用同一組識別，只有標題文字與 icon 不同 ── */
 .eyebrow {
