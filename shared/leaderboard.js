@@ -15,9 +15,15 @@
     return (CFG.FIREBASE_DB_URL || '').replace(/\/$/, '');
   }
 
-  // Firebase 的 key 不接受 . # $ [ ] / 這些字元
+  // Firebase 的 key 不接受 . # $ [ ] / 這些字元。
+  // 長度上限維持 20，配合 Firebase 安全性規則（FIREBASE_SETUP.md）裡
+  // name 欄位既有的 validate 規則不用動——兩邊要一起改，改這裡卻沒
+  // 同步改主控台的規則，超過舊上限的名字送出去會被規則擋掉、寫入失敗。
+  // 輸入框本身沒有字數限制，只有存進資料庫這一步才會裁切，
+  // 所以打字時不會感覺到上限。
+  const NAME_MAX = 20;
   function safeKey(name) {
-    return String(name || '匿名').replace(/[.#$[\]/]/g, '_').slice(0, 20);
+    return String(name || '匿名').replace(/[.#$[\]/]/g, '_').slice(0, NAME_MAX);
   }
 
   /** 上傳分數；只有比自己既有最高分高才會覆蓋。回傳是否真的寫入。 */
@@ -25,15 +31,22 @@
     if (!dbUrl()) return false;
     if (entry.name === CFG.TEST_ACCOUNT) return false; // 測試帳號不進榜
 
-    const url = `${dbUrl()}/${gameId}/best/${encodeURIComponent(safeKey(entry.name))}.json`;
+    const cleanEntry = { ...entry, name: String(entry.name || '匿名').slice(0, NAME_MAX) };
+    const url = `${dbUrl()}/${gameId}/best/${encodeURIComponent(safeKey(cleanEntry.name))}.json`;
     try {
       const current = await fetch(url).then((r) => r.json());
-      if (current && (current.score || 0) >= entry.score) return false;
-      await fetch(url, {
+      if (current && (current.score || 0) >= cleanEntry.score) return false;
+      const res = await fetch(url, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(entry),
+        body: JSON.stringify(cleanEntry),
       });
+      // fetch 對 4xx/5xx 不會 reject，一定要自己檢查 ok，
+      // 否則 Firebase 規則擋下寫入時，這裡還是會回傳「成功」
+      if (!res.ok) {
+        console.warn('[排行榜] 上傳被拒絕（HTTP ' + res.status + '），可能是安全性規則不允許');
+        return false;
+      }
       return true;
     } catch (err) {
       console.warn('[排行榜] 上傳失敗：', err.message);

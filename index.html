@@ -26,15 +26,17 @@
     <div class="eyebrow">BISANCOS</div>
     <div class="title">🧺 愛心接接樂</div>
     <div class="divider"></div>
-    <div class="rules">
+    <div class="rules" id="menu-rules">
       💗 愛心 <b>+10</b>　🌹 玫瑰 <b>+20</b><br>
       🎁 禮物 <b>+30</b><br>
       💔 破碎愛心 <b>-10</b>　💣 炸彈 <b>-20</b><br>
       ❤️ 接到扣分物品會 <b>-1 條命</b>，剩 5 條命<br>
       <span style="color:#8a6b78">左右滑動移動籃子，限時 60 秒</span>
     </div>
-    <input type="text" id="name" maxlength="10" placeholder="輸入UID/暱稱">
+    <div class="board hidden" id="menu-board"></div>
+    <input type="text" id="name" placeholder="輸入UID/暱稱">
     <button class="btn" id="start">開始遊戲</button>
+    <button class="btn ghost" id="show-board">🏆 查看排行榜</button>
   </div>
 
   <!-- 結算畫面 -->

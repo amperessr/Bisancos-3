@@ -68,6 +68,9 @@ canvas {
   backdrop-filter: blur(6px);
   text-align: center;
   z-index: 10;
+  /* 內容變多（排行榜按鈕、生命規則等）在矮螢幕上可能超出視窗高度，
+     #stage 是 overflow:hidden，沒有這行會直接被裁掉看不到 */
+  overflow-y: auto;
 }
 .overlay.hidden { display: none; }
 
@@ -178,6 +181,36 @@ input[type='text']:focus { border-color: var(--pink); }
   padding: 7px 10px;
 }
 .mute-btn:active { transform: scale(0.92); }
+
+/* ── 方向鍵（貪食蛇用，紅白機式十字方向鍵：按一下就轉向，不是類比搖桿）─ */
+.dpad {
+  position: absolute;
+  left: 50%;
+  bottom: calc(46px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: 176px;
+  height: 176px;
+  z-index: 5;
+}
+.dpad-btn {
+  position: absolute;
+  width: 56px;
+  height: 56px;
+  border: none;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--pink-deep);
+  font-size: 20px;
+  line-height: 1;
+  box-shadow: var(--shadow);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+}
+.dpad-btn:active { background: var(--pink); color: #fff; transform: scale(0.94); }
+.dpad-up    { left: 60px; top: 0; }
+.dpad-down  { left: 60px; top: 120px; }
+.dpad-left  { left: 0; top: 60px; }
+.dpad-right { left: 120px; top: 60px; }
 
 /* ── 排行榜 ───────────────────────────────────── */
 .board {

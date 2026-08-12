@@ -38,6 +38,7 @@
   const ui = {
     menu: el('menu'), over: el('over'), name: el('name'),
     start: el('start'), again: el('again'), mute: el('mute'),
+    menuRules: el('menu-rules'), menuBoard: el('menu-board'), showBoard: el('show-board'),
     score: el('score'), lives: el('lives'), time: el('time'),
     reason: el('over-reason'), finalScore: el('final-score'), finalDetail: el('final-detail'), board: el('board'),
   };
@@ -67,12 +68,10 @@
   window.addEventListener('resize', resize);
   window.addEventListener('orientationchange', () => setTimeout(resize, 200));
 
-  // ── 音樂／音效（shared/audio.js 提供的共用引擎） ──
-  // 背景音樂是正式配樂檔（assets/bgm.mp3），音效沒有對應的檔案，
-  // 維持用 WebAudio 合成短音符（叮咚聲、過場旋律）。
+  // ── 音效（shared/audio.js 提供的共用引擎，WebAudio 合成短音符） ──
+  // 沒有背景音樂，只有叮咚聲、過場旋律這類音效。
   const N = { D4: 293.66, G3: 196.00, G4: 392.00, A4: 440.00,
     B4: 493.88, D5: 587.33, E5: 659.25, G5: 783.99 };
-  const MUSIC_URL = 'assets/bgm.mp3';
 
   function sfx(notes) { QIXI_AUDIO.sfx(notes); }
 
@@ -98,14 +97,12 @@
     lastT = performance.now();
     QIXI_AUDIO.unlock();
     sfx([{ freq: N.G4, dur: 0.1 }, { freq: N.B4, dur: 0.1, at: 0.08 }, { freq: N.D5, dur: 0.16, at: 0.16 }]);
-    QIXI_AUDIO.startMusic(MUSIC_URL);
     requestAnimationFrame(loop);
   }
 
   async function endGame() {
     if (state === 'over') return;
     state = 'over';
-    QIXI_AUDIO.stopMusic(0.4);
     sfx([{ freq: N.D5, dur: 0.14 }, { freq: N.B4, dur: 0.16, at: 0.1 }, { freq: N.G4, dur: 0.3, at: 0.2 }]);
     const name = QIXI_LB.getName() || '匿名';
     ui.reason.textContent = deathReason || '時間到';
@@ -429,6 +426,16 @@
     refreshMuteIcon();
   });
   refreshMuteIcon();
+
+  // 開始畫面切換規則說明／排行榜，不用開始遊戲就能查榜
+  let showingBoard = false;
+  ui.showBoard.addEventListener('click', async () => {
+    showingBoard = !showingBoard;
+    ui.menuRules.classList.toggle('hidden', showingBoard);
+    ui.menuBoard.classList.toggle('hidden', !showingBoard);
+    ui.showBoard.textContent = showingBoard ? '← 返回' : '🏆 查看排行榜';
+    if (showingBoard) await QIXI_LB.render(ui.menuBoard, GAME_ID, QIXI_LB.getName());
+  });
 
   ui.start.addEventListener('click', startGame);
   ui.again.addEventListener('click', () => {
