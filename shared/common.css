@@ -91,12 +91,6 @@ canvas {
   color: var(--pink-deep);
   letter-spacing: 1px;
 }
-.divider {
-  width: 54px;
-  height: 3px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, transparent, var(--pink), transparent);
-}
 .subtitle { font-size: 14px; line-height: 1.7; color: #8a6b78; }
 
 .rules {
